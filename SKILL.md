@@ -46,6 +46,15 @@ node {baseDir}/scripts/chat.js --model grok-3-mini "Quick question: 2+2?"
 node {baseDir}/scripts/chat.js --image /path/to/image.jpg "What's in this image?"
 ```
 
+### 🔍 Search X/Twitter (Real-time!)
+```bash
+node {baseDir}/scripts/search-x.js "Remotion video framework"
+node {baseDir}/scripts/search-x.js --days 7 "Claude AI tips"
+node {baseDir}/scripts/search-x.js --handles @remotion_dev "updates"
+```
+
+Uses xAI Responses API with x_search tool for real X posts with citations.
+
 ### List available models
 ```bash
 node {baseDir}/scripts/models.js
