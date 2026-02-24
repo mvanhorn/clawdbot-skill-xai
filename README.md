@@ -1,71 +1,61 @@
-# xAI / Grok Skill for Clawdbot
+# 🤖 xAI / Grok Skill for OpenClaw
 
-Chat with xAI's Grok models from Clawdbot. Supports text chat, vision, and all Grok models including Grok-4.
+Chat with xAI's [Grok](https://x.ai) models. Text, vision, and real-time X/Twitter search.
 
-## Installation
+## What it does
+
+- **Chat with Grok** - text conversations with Grok-3, Grok-3-mini, Grok-3-fast
+- **Vision** - analyze images with Grok's vision model
+- **Search X** - real-time Twitter search with citations via x_search tool
+- **Model selection** - pick the right model for the job
+
+## Quick start
+
+### Install the skill
 
 ```bash
-clawdhub install xai
-# or
-cd ~/clawd/skills && git clone https://github.com/mvanhorn/clawdbot-skill-xai xai
+git clone https://github.com/mvanhorn/clawdbot-skill-xai.git ~/.openclaw/skills/xai
 ```
 
-## Setup
+### Set up your API key
 
-Get your API key from [console.x.ai](https://console.x.ai), then:
+Get a key from [console.x.ai](https://console.x.ai), then:
 
-```bash
-clawdbot config set skills.entries.xai.apiKey "xai-YOUR-KEY"
-```
-
-Or set environment variable:
 ```bash
 export XAI_API_KEY="xai-YOUR-KEY"
 ```
 
-## Usage
+### Example chat usage
 
-### Chat with Grok
+- "Ask Grok what it thinks about AI safety"
+- "Use Grok to analyze this image"
+- "Search X for what people are saying about Remotion"
+- "What Grok models are available?"
+
+## Available models
+
+| Model | Best for |
+|-------|----------|
+| `grok-3` | Complex tasks, reasoning |
+| `grok-3-mini` | Fast, efficient responses |
+| `grok-3-fast` | Speed-optimized |
+| `grok-2-vision-1212` | Image understanding |
+
+## CLI usage
+
 ```bash
 node scripts/chat.js "What is the meaning of life?"
-```
-
-### Use specific model
-```bash
-node scripts/chat.js --model grok-4-0709 "Complex question here"
 node scripts/chat.js --model grok-3-mini "Quick question"
-```
-
-### Vision (analyze images)
-```bash
-node scripts/chat.js --image photo.jpg "What's in this image?"
-```
-
-### System prompts
-```bash
-node scripts/chat.js --system "You are a pirate" "Tell me about ships"
-```
-
-### List available models
-```bash
+node scripts/chat.js --image /path/to/image.jpg "What's in this?"
+node scripts/search-x.js "AI news" --days 7
 node scripts/models.js
 ```
 
-## Available Models
+## How it works
 
-- `grok-3` - Capable general model
-- `grok-3-mini` - Fast and efficient
-- `grok-4-0709` - Latest Grok 4
-- `grok-4-fast-reasoning` - Fast with reasoning
-- `grok-2-vision-1212` - Image understanding
-- `grok-2-image-1212` - Image generation
+Wraps the xAI API (`https://api.x.ai`). Chat uses the standard completions endpoint. X search uses the Responses API with the `x_search` tool for real tweets with citations.
 
-## Clawdbot Integration
-
-Once installed, you can just say:
-- "Ask Grok about [topic]"
-- "Use Grok to analyze this image"
-- "Have Grok 4 explain [concept]"
+- API docs: https://docs.x.ai/api
 
 ## License
 
