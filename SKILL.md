@@ -11,7 +11,7 @@ triggers:
   - xai
   - ask grok
 metadata:
-  clawdbot:
+  openclaw:
     emoji: "🤖"
     requires:
       env:
@@ -34,8 +34,8 @@ Chat with xAI's Grok models. Supports text and vision.
 Set your API key in the skill config:
 
 ```bash
-# Via clawdbot config
-clawdbot config set skills.entries.xai.apiKey "xai-YOUR-KEY"
+# Via openclaw config
+openclaw config set skills.entries.xai.apiKey "xai-YOUR-KEY"
 
 # Or environment variable
 export XAI_API_KEY="xai-YOUR-KEY"
