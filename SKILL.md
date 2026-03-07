@@ -1,6 +1,10 @@
 ---
 name: xai
-description: Chat with Grok models via xAI API. Supports Grok-3, Grok-3-mini, vision, and more.
+version: "1.1.0"
+description: Chat with Grok models via xAI API. Supports Grok-4, Grok-4.20, Grok-3, Grok-3-mini, vision, and real-time X search.
+author: mvanhorn
+license: MIT
+repository: https://github.com/mvanhorn/clawdbot-skill-xai
 homepage: https://docs.x.ai
 triggers:
   - grok
@@ -9,6 +13,16 @@ triggers:
 metadata:
   clawdbot:
     emoji: "🤖"
+    requires:
+      env:
+        - XAI_API_KEY
+    primaryEnv: XAI_API_KEY
+    tags:
+      - xai
+      - grok
+      - llm
+      - vision
+      - x-search
 ---
 
 # xAI / Grok
