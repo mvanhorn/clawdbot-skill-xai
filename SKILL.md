@@ -1,7 +1,7 @@
 ---
 name: xai
-version: "2.0.0"
-description: "Chat with xAI's Grok models - reasoning, vision analysis, code generation, and multi-turn conversations. Supports Grok-4, Grok-4.20, Grok-3, and Grok-3-mini with function calling. For X/Twitter search, see /search-x."
+version: "3.0.0"
+description: "Full xAI platform skill - chat, vision, image generation, video generation, text-to-speech, Responses API, Collections/RAG, and batch processing. Supports Grok-4, Grok-4.20, Grok-3, code models, and multimodal generation."
 author: mvanhorn
 license: MIT
 repository: https://github.com/mvanhorn/clawdbot-skill-xai
@@ -20,6 +20,14 @@ triggers:
   - ask xai
   - grok compare
   - grok ocr
+  - grok image
+  - grok generate image
+  - grok video
+  - grok tts
+  - grok speak
+  - grok voice
+  - grok search
+  - grok rag
 metadata:
   openclaw:
     emoji: "🤖"
@@ -41,13 +49,21 @@ metadata:
       - ocr
       - model-comparison
       - image-analysis
+      - image-generation
+      - video-generation
+      - text-to-speech
+      - tts
+      - responses-api
+      - rag
+      - collections
+      - batch-api
 ---
 
 # xAI / Grok
 
-Chat with xAI's Grok models. Supports text chat, vision analysis, step-by-step reasoning, code generation, multi-turn conversations, and model comparison.
+Full xAI platform skill. Chat, vision, image generation, video generation, text-to-speech, Responses API with server-side tools, Collections/RAG, and batch processing.
 
-> **Not for X/Twitter search.** For searching posts on X, use the `/search-x` skill instead. This skill is for direct conversations with Grok - analysis, reasoning, code, and vision.
+> **Not for X/Twitter search.** For searching posts on X, use the `/search-x` skill instead. This skill is for direct conversations with Grok and multimodal generation.
 
 ## Setup
 
@@ -63,24 +79,49 @@ openclaw config set skills.entries.xai.apiKey "xai-YOUR-KEY"
 
 Get your API key at: https://console.x.ai
 
+---
+
 ## Available Models
 
-| Model | Best for | Context | Notes |
-|-------|----------|---------|-------|
-| `grok-4` | Complex analysis, long-form reasoning | 131072 | Most capable model |
-| `grok-4.20` | Latest capabilities, cutting-edge tasks | 131072 | Newest release |
-| `grok-3` | General-purpose tasks, balanced performance | 131072 | Reliable default |
-| `grok-3-mini` | Fast responses, step-by-step reasoning | 131072 | Supports reasoning effort |
-| `grok-3-fast` | Speed-optimized tasks | 131072 | Lower latency |
-| `grok-2-vision-1212` | Image understanding, OCR, diagrams | 32768 | Vision-capable |
+### Text / Chat Models
 
-### Model selection guide
+| Model | Context | Input / Output (per 1M tokens) | Notes |
+|-------|---------|-------------------------------|-------|
+| `grok-4.20-multi-agent-beta-0309` | 2M | $2.00 / $6.00 | Multi-agent orchestration |
+| `grok-4.20-beta-0309-reasoning` | 2M | $2.00 / $6.00 | Extended reasoning |
+| `grok-4` | 131K | - | Most capable general model |
+| `grok-4.20` | 131K | - | Latest general release |
+| `grok-4-1-fast-reasoning` | 2M | $0.20 / $0.50 | Fast reasoning, lower cost |
+| `grok-3` | 131K | - | Reliable general-purpose default |
+| `grok-3-mini` | 131K | - | Fast, supports reasoning effort |
+| `grok-3-fast` | 131K | - | Lowest latency text model |
+| `grok-code-fast-1` | 256K | $0.20 / $1.50 | Dedicated code model |
+| `grok-2-vision-1212` | 32K | - | Vision-capable |
+
+### Image Models
+
+| Model | Price | Rate Limit | Notes |
+|-------|-------|------------|-------|
+| `grok-imagine-image-pro` | $0.07/image | 30 RPM | Highest quality |
+| `grok-imagine-image` | $0.02/image | 300 RPM | Fast, cost-effective |
+
+### Video Model
+
+| Model | Price | Rate Limit | Notes |
+|-------|-------|------------|-------|
+| `grok-imagine-video` | $0.050/sec | 60 RPM | Up to 10 sec at 720p |
+
+### Model Selection Guide
 
 - **Default for chat:** `grok-3` - good balance of quality and speed
-- **Complex problems:** `grok-4` or `grok-4.20` - best reasoning, highest quality
-- **Quick answers:** `grok-3-mini` - fast, efficient, good enough for simple tasks
+- **Complex problems:** `grok-4.20-beta-0309-reasoning` or `grok-4` - best reasoning
+- **Multi-agent workflows:** `grok-4.20-multi-agent-beta-0309` - orchestration support
+- **Quick answers:** `grok-3-mini` - fast, efficient
+- **Code tasks:** `grok-code-fast-1` - 256K context, dedicated code model
 - **Image analysis:** `grok-2-vision-1212` - auto-selected when `--image` is used
-- **Reasoning tasks:** `grok-3-mini` with `--reasoning` - exposes chain-of-thought
+- **Image generation:** `grok-imagine-image-pro` (quality) or `grok-imagine-image` (speed)
+- **Video generation:** `grok-imagine-video` - text/image/video to video
+- **Reasoning tasks:** `grok-3-mini` with `--reasoning` or `grok-4-1-fast-reasoning`
 
 ---
 
@@ -99,6 +140,7 @@ node {baseDir}/scripts/chat.js "What is the meaning of life?"
 ```bash
 node {baseDir}/scripts/chat.js --model grok-4 "Explain quantum entanglement in detail"
 node {baseDir}/scripts/chat.js --model grok-3-mini "Quick: what's the capital of France?"
+node {baseDir}/scripts/chat.js --model grok-code-fast-1 "Write a Python async web crawler"
 ```
 
 #### Set a system prompt
@@ -135,152 +177,295 @@ node {baseDir}/scripts/chat.js --image /path/to/image.jpg "What's in this image?
 node {baseDir}/scripts/chat.js --image screenshot.png "What UI issues do you see? Suggest improvements."
 ```
 
-#### Diagram interpretation
-
-```bash
-node {baseDir}/scripts/chat.js --image architecture.png "Explain this system architecture diagram. Identify components and data flow."
-```
-
 #### Document OCR
 
 ```bash
 node {baseDir}/scripts/chat.js --image document.jpg "Extract all text from this document. Format as markdown."
 ```
 
-#### Code screenshot analysis
-
-```bash
-node {baseDir}/scripts/chat.js --image code-screenshot.png "What does this code do? Are there any bugs?"
-```
-
-#### Supported image formats
-
-- JPEG (.jpg, .jpeg)
-- PNG (.png)
-- GIF (.gif)
-- WebP (.webp)
-
-Images are base64-encoded and sent inline. Keep images under 20MB for reliable processing.
+Supported formats: JPEG, PNG, GIF, WebP. Keep images under 20MB.
 
 ---
 
-### 3. Reasoning Mode
+### 3. Image Generation
 
-Use `grok-3-mini` for step-by-step reasoning that shows its work. The model exposes its chain-of-thought process, making it ideal for math, logic, and debugging.
+Generate images from text prompts using the xAI API.
+
+```bash
+curl -s https://api.x.ai/v1/images/generations \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-imagine-image-pro",
+    "prompt": "A futuristic city skyline at sunset, cyberpunk style, neon lights reflecting on water"
+  }'
+```
+
+#### Quick generation (lower cost)
+
+```bash
+curl -s https://api.x.ai/v1/images/generations \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-imagine-image",
+    "prompt": "A cozy cabin in the mountains during winter, oil painting style"
+  }'
+```
+
+The response contains a base64-encoded image or URL. Use `grok-imagine-image-pro` ($0.07/img, 30 RPM) for highest quality, or `grok-imagine-image` ($0.02/img, 300 RPM) for fast iteration.
+
+---
+
+### 4. Image Editing
+
+Edit existing images with natural language instructions. Accepts up to 3 input images.
+
+```bash
+curl -s https://api.x.ai/v1/images/edits \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -F "model=grok-imagine-image-pro" \
+  -F "prompt=Change the background to a beach sunset" \
+  -F "image[]=@photo.jpg"
+```
+
+#### Iterative editing workflow
+
+1. Generate an initial image with `/v1/images/generations`
+2. Edit it with `/v1/images/edits` and natural language instructions
+3. Repeat step 2 to refine - each edit can reference up to 3 input images
+
+---
+
+### 5. Video Generation
+
+Generate video from text, images, or existing video. Up to 10 seconds at 720p.
+
+```bash
+curl -s https://api.x.ai/v1/images/generations \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-imagine-video",
+    "prompt": "A drone flyover of a mountain lake at sunrise, cinematic"
+  }'
+```
+
+Pricing: $0.050/second, 60 RPM. Supports text-to-video, image-to-video, and video-to-video inputs.
+
+---
+
+### 6. Text-to-Speech (TTS)
+
+Convert text to speech with expressive voice synthesis.
+
+```bash
+curl -s https://api.x.ai/v1/tts \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "tts-1",
+    "input": "Hello! Welcome to the future of AI.",
+    "voice": "eve"
+  }' --output speech.mp3
+```
+
+#### Available voices
+
+| Voice | Description |
+|-------|-------------|
+| `eve` | Default female voice |
+| `ara` | Female voice |
+| `rex` | Male voice |
+| `sal` | Male voice |
+| `leo` | Male voice |
+
+#### Supported languages (20)
+
+Arabic, Bengali, Chinese, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Portuguese, Russian, Spanish, Turkish, Vietnamese, and more.
+
+#### Expression tags
+
+Control delivery with inline tags in the input text:
+
+- `[pause]` - insert a pause
+- `[laugh]` - laughter
+- `[breath]` - audible breath
+- `[tsk]` - tongue click
+- `<whisper>text</whisper>` - whispered speech
+- `<singing>text</singing>` - singing style
+- `<loud>text</loud>` - louder delivery
+- `<slow>text</slow>` - slower pace
+
+Example with expression:
+
+```bash
+curl -s https://api.x.ai/v1/tts \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "tts-1",
+    "input": "And the winner is [pause] <loud>you!</loud> [laugh]",
+    "voice": "rex"
+  }' --output announcement.mp3
+```
+
+#### Output formats
+
+MP3, WAV, PCM (8-48kHz sample rates).
+
+#### WebSocket streaming
+
+For real-time streaming TTS (50 concurrent sessions, unlimited length):
+
+```
+WSS wss://api.x.ai/v1/tts
+```
+
+---
+
+### 7. Responses API (Recommended)
+
+The Responses API (`POST /v1/responses`) is the recommended way to interact with Grok. It supports server-side tools that run on xAI's infrastructure.
+
+```bash
+curl -s https://api.x.ai/v1/responses \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-3",
+    "input": "What are the latest developments in AI?",
+    "tools": [{"type": "web_search"}]
+  }'
+```
+
+#### Server-side tools
+
+| Tool | Description |
+|------|-------------|
+| `web_search` | Search the web |
+| `x_search` | Search X/Twitter posts |
+| `code_interpreter` | Execute code server-side |
+| `collections_search` | Search your uploaded document collections |
+
+#### Mixed tool support
+
+Combine server-side tools with your own client-side function definitions:
+
+```bash
+curl -s https://api.x.ai/v1/responses \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-3",
+    "input": "Search the web for recent AI news and save a summary",
+    "tools": [
+      {"type": "web_search"},
+      {"type": "function", "function": {"name": "save_note", "description": "Save a text note", "parameters": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}}}
+    ]
+  }'
+```
+
+#### Retrieve and delete responses
+
+```bash
+# Retrieve a previous response
+curl -s https://api.x.ai/v1/responses/resp_abc123 \
+  -H "Authorization: Bearer $XAI_API_KEY"
+
+# Delete a response
+curl -s -X DELETE https://api.x.ai/v1/responses/resp_abc123 \
+  -H "Authorization: Bearer $XAI_API_KEY"
+```
+
+---
+
+### 8. Collections / RAG
+
+Upload documents and search them with keyword, semantic, or hybrid search.
+
+#### Upload a file
+
+```bash
+curl -s https://api.x.ai/v1/files \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -F "file=@document.pdf" \
+  -F "purpose=assistants"
+```
+
+#### Create a collection
+
+```bash
+curl -s https://management-api.x.ai/collections \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "my-knowledge-base",
+    "description": "Product documentation"
+  }'
+```
+
+#### Search documents
+
+```bash
+curl -s https://management-api.x.ai/documents/search \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "collection_id": "col_abc123",
+    "query": "How do I configure authentication?",
+    "search_type": "hybrid"
+  }'
+```
+
+Search types: `keyword`, `semantic`, `hybrid`.
+
+Use with the Responses API by adding `collections_search` as a tool to let Grok search your collections automatically.
+
+---
+
+### 9. Reasoning Mode
+
+Use `grok-3-mini` or `grok-4-1-fast-reasoning` for step-by-step reasoning.
 
 ```bash
 node {baseDir}/scripts/chat.js --model grok-3-mini --system "Think step by step. Show your reasoning before giving the final answer." "If a train leaves Chicago at 8am going 60mph and another leaves New York at 9am going 80mph, when do they meet?"
 ```
 
-#### Math and logic
+For extended reasoning with 2M context:
 
 ```bash
-node {baseDir}/scripts/chat.js --model grok-3-mini --system "Show all work step by step." "Prove that the square root of 2 is irrational"
-```
-
-#### Debugging reasoning
-
-```bash
-node {baseDir}/scripts/chat.js --model grok-3-mini --system "Analyze this problem step by step. Consider edge cases." "Why would a Node.js process leak memory when using closures in event listeners?"
-```
-
-#### Decision analysis
-
-```bash
-node {baseDir}/scripts/chat.js --model grok-3-mini --system "List pros and cons, then give a recommendation with reasoning." "Should a startup use PostgreSQL or MongoDB for a social media app?"
-```
-
-The reasoning mode works by leveraging grok-3-mini's ability to produce structured chain-of-thought output. Use system prompts to control the reasoning style:
-- "Think step by step" - sequential logical reasoning
-- "Show all work" - math-oriented with intermediate calculations
-- "Consider alternatives" - explores multiple approaches
-- "Explain your reasoning" - justifies each decision
-
----
-
-### 4. Code Generation
-
-Grok models are strong at code generation, review, and explanation.
-
-```bash
-node {baseDir}/scripts/chat.js --system "You are an expert programmer. Write clean, production-ready code with error handling." "Write a Python function that implements binary search on a sorted array"
-```
-
-#### Code review
-
-```bash
-node {baseDir}/scripts/chat.js --model grok-4 --system "You are a senior code reviewer. Be thorough but constructive." "Review this function: function debounce(fn, ms) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); }; }"
-```
-
-#### Multi-language translation
-
-```bash
-node {baseDir}/scripts/chat.js --system "Convert the following code to Rust. Preserve the logic and add appropriate error handling." "def fibonacci(n): a, b = 0, 1; return [a := b, b := a + b for _ in range(n)]"
+node {baseDir}/scripts/chat.js --model grok-4.20-beta-0309-reasoning "Analyze the tradeoffs between microservices and monolithic architecture for a team scaling from 5 to 50 engineers"
 ```
 
 ---
 
-### 5. Multi-Turn Conversations
+### 10. Code Generation
 
-For multi-turn conversations, chain multiple calls and maintain context by passing previous exchanges in the system prompt.
-
-```bash
-# Turn 1: Ask a question
-RESPONSE=$(node {baseDir}/scripts/chat.js --json "What are the SOLID principles in software engineering?")
-
-# Turn 2: Follow up with context
-node {baseDir}/scripts/chat.js --system "Previous context: The user asked about SOLID principles and you explained them. Now they want to go deeper." "Give me a real-world Python example of the Dependency Inversion Principle"
-```
-
-For automated multi-turn workflows, parse the JSON output (`--json`) and feed previous messages back as system context. The xAI API at `api.x.ai/v1/chat/completions` accepts a full messages array - you can build this programmatically:
+Use any Grok model for code, or `grok-code-fast-1` for a dedicated code model with 256K context.
 
 ```bash
-# Full messages array approach (for scripts)
-curl -s https://api.x.ai/v1/chat/completions \
-  -H "Authorization: Bearer $XAI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "grok-3",
-    "messages": [
-      {"role": "user", "content": "What is recursion?"},
-      {"role": "assistant", "content": "Recursion is when a function calls itself..."},
-      {"role": "user", "content": "Show me a recursive fibonacci in JavaScript"}
-    ]
-  }'
+node {baseDir}/scripts/chat.js --model grok-code-fast-1 --system "Write clean, production-ready code with error handling." "Write a Python async web crawler using aiohttp that respects robots.txt"
 ```
 
 ---
 
-### 6. Model Comparison
+### 11. Model Comparison
 
 Run the same prompt through multiple models to compare quality, speed, and style.
 
 ```bash
-# Compare grok-3 vs grok-4 on a reasoning task
-echo "=== grok-3 ===" && node {baseDir}/scripts/chat.js --model grok-3 "Explain monads in simple terms" && echo -e "\n=== grok-4 ===" && node {baseDir}/scripts/chat.js --model grok-4 "Explain monads in simple terms"
-```
-
-#### Quick comparison script
-
-```bash
 PROMPT="What are the tradeoffs between REST and GraphQL?"
-for model in grok-3 grok-3-mini grok-4; do
+for model in grok-3 grok-3-mini grok-4 grok-code-fast-1; do
   echo "=== $model ==="
   node {baseDir}/scripts/chat.js --model "$model" "$PROMPT"
   echo ""
 done
 ```
 
-This is useful for:
-- Evaluating which model handles your use case best
-- Checking if grok-3-mini is "good enough" before using grok-4
-- Comparing response styles across model generations
-
 ---
 
-### 7. List Available Models
-
-Query the xAI API for all models your key has access to.
+### 12. List Available Models
 
 ```bash
 node {baseDir}/scripts/models.js
@@ -288,9 +473,66 @@ node {baseDir}/scripts/models.js
 
 ---
 
+## Batch API
+
+For bulk processing, use the Batch API (GA since Jan 2026). Submit up to thousands of requests and retrieve results asynchronously.
+
+```bash
+# Submit a batch
+curl -s https://api.x.ai/v1/batch \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "requests": [
+      {"model": "grok-3", "messages": [{"role": "user", "content": "Summarize quantum computing"}]},
+      {"model": "grok-3", "messages": [{"role": "user", "content": "Summarize machine learning"}]}
+    ]
+  }'
+```
+
+---
+
+## Prompt Caching
+
+Prompt caching reduces input token costs by up to 90% for repeated prefixes. It is automatic - the API caches the longest common prefix of your messages. Subsequent requests with the same prefix reuse cached tokens at a fraction of the cost.
+
+---
+
+## Deferred Completions
+
+For long-running requests, poll for results:
+
+```bash
+curl -s https://api.x.ai/v1/chat/deferred-completion/req_abc123 \
+  -H "Authorization: Bearer $XAI_API_KEY"
+```
+
+---
+
+## Remote MCP Tool Integration
+
+xAI supports remote MCP (Model Context Protocol) tool integration (since Nov 2025). Connect external MCP servers as tools in your Grok requests.
+
+---
+
+## Rate Limits
+
+6 tiers based on cumulative spend:
+
+| Tier | Spend Threshold | Typical RPM |
+|------|----------------|-------------|
+| Free | $0 | Low |
+| 1 | $5 | Moderate |
+| 2 | $50 | Higher |
+| 3 | $100 | Higher |
+| 4 | $500 | High |
+| 5 | $5,000+ | Highest |
+
+---
+
 ## Function Calling / Tool Use
 
-The xAI API supports function calling (tool use) via the OpenAI-compatible format. You can define tools in the request body and Grok will return structured function calls.
+The xAI API supports function calling via the OpenAI-compatible format on all Grok-3 and Grok-4 models.
 
 ```bash
 curl -s https://api.x.ai/v1/chat/completions \
@@ -318,13 +560,6 @@ curl -s https://api.x.ai/v1/chat/completions \
   }'
 ```
 
-When Grok decides to call a function, the response includes a `tool_calls` array in the assistant message. You then:
-1. Execute the function locally
-2. Send the result back as a `tool` role message
-3. Get Grok's final response incorporating the tool result
-
-This follows the standard OpenAI function calling protocol. All Grok-3 and Grok-4 models support function calling.
-
 ---
 
 ## Error Recovery
@@ -334,33 +569,10 @@ This follows the standard OpenAI function calling protocol. All Grok-3 and Grok-
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `401 Unauthorized` | Invalid or expired API key | Check `XAI_API_KEY`, get a new key at console.x.ai |
-| `429 Too Many Requests` | Rate limit exceeded | Wait 60 seconds and retry, or reduce request frequency |
-| `404 Not Found` | Model name wrong or unavailable | Run `node {baseDir}/scripts/models.js` to see available models |
-| `413 Payload Too Large` | Image too large for vision | Resize image to under 20MB, reduce resolution |
+| `429 Too Many Requests` | Rate limit exceeded | Wait and retry, or upgrade tier |
+| `404 Not Found` | Model name wrong or unavailable | Run `node {baseDir}/scripts/models.js` to check |
+| `413 Payload Too Large` | Image too large | Resize to under 20MB |
 | `500 Internal Server Error` | xAI API issue | Retry after a few seconds, check status.x.ai |
-| `ENOTFOUND api.x.ai` | Network issue | Check internet connection |
-| Image not found | Bad file path for `--image` | Use absolute path, check file exists |
-
-### Rate limit handling
-
-If you hit rate limits during model comparison or batch operations, add a delay between requests:
-
-```bash
-for model in grok-3 grok-3-mini grok-4; do
-  echo "=== $model ==="
-  node {baseDir}/scripts/chat.js --model "$model" "$PROMPT"
-  sleep 2
-done
-```
-
-### Vision error recovery
-
-If vision analysis fails:
-1. Check the image format is supported (JPEG, PNG, GIF, WebP)
-2. Verify the file path is correct and the file is readable
-3. Ensure the image is under 20MB
-4. Try a different image to rule out corruption
-5. Fall back to `grok-2-vision-1212` explicitly with `--model grok-2-vision-1212`
 
 ---
 
@@ -377,47 +589,41 @@ node {baseDir}/scripts/chat.js "What is the current state of AI in 2026? Key bre
 **User:** "Have Grok write a Python web scraper"
 **Action:**
 ```bash
-node {baseDir}/scripts/chat.js --model grok-4 --system "Write production-ready Python code with error handling and type hints." "Write a web scraper using httpx and BeautifulSoup that extracts article titles and URLs from a news site"
+node {baseDir}/scripts/chat.js --model grok-code-fast-1 --system "Write production-ready Python code with error handling and type hints." "Write a web scraper using httpx and BeautifulSoup that extracts article titles and URLs from a news site"
 ```
 
-**User:** "Quick question for Grok"
+### Image generation examples
+
+**User:** "Generate an image of a sunset over mountains"
 **Action:**
 ```bash
-node {baseDir}/scripts/chat.js --model grok-3-mini "What's the time complexity of quicksort?"
+curl -s https://api.x.ai/v1/images/generations \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "grok-imagine-image-pro", "prompt": "A dramatic sunset over mountain peaks, golden hour lighting, photorealistic"}'
 ```
 
-### Vision examples
+### TTS examples
 
-**User:** "Grok, analyze this screenshot"
+**User:** "Read this text aloud"
 **Action:**
 ```bash
-node {baseDir}/scripts/chat.js --image /path/to/screenshot.png "Analyze this UI screenshot. Identify usability issues, accessibility problems, and suggest improvements."
+curl -s https://api.x.ai/v1/tts \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "tts-1", "input": "The quick brown fox jumps over the lazy dog.", "voice": "eve"}' \
+  --output speech.mp3
 ```
 
-**User:** "OCR this document"
+### Responses API examples
+
+**User:** "Search the web and summarize recent AI news"
 **Action:**
 ```bash
-node {baseDir}/scripts/chat.js --image /path/to/document.jpg "Extract all text from this document. Preserve formatting and structure. Output as markdown."
-```
-
-**User:** "What's in this diagram?"
-**Action:**
-```bash
-node {baseDir}/scripts/chat.js --image /path/to/diagram.png "Explain this diagram in detail. Identify all components, relationships, and data flows."
-```
-
-### Reasoning examples
-
-**User:** "Walk me through this math problem"
-**Action:**
-```bash
-node {baseDir}/scripts/chat.js --model grok-3-mini --system "Show all work step by step." "Solve: integral of x^2 * e^x dx"
-```
-
-**User:** "Debug this logic"
-**Action:**
-```bash
-node {baseDir}/scripts/chat.js --model grok-3-mini --system "Think step by step about what could go wrong." "Why would this SQL query return duplicates: SELECT u.name, o.total FROM users u JOIN orders o ON u.id = o.user_id WHERE o.status = 'completed'"
+curl -s https://api.x.ai/v1/responses \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "grok-3", "input": "Summarize the most important AI developments this week", "tools": [{"type": "web_search"}]}'
 ```
 
 ---
@@ -443,8 +649,8 @@ node {baseDir}/scripts/models.js
 
 ## Related Skills
 
-- **/search-x** - Search X/Twitter for real-time posts, trends, and discussions. Uses xAI's Responses API with the x_search tool. Use this when you need to find what people are saying on X.
-- **/last30days** - Research what's happened in the last 30 days across the web. Combines multiple sources for comprehensive trend analysis.
+- **/search-x** - Search X/Twitter for real-time posts, trends, and discussions. Uses xAI's Responses API with the x_search tool.
+- **/last30days** - Research what's happened in the last 30 days across the web.
 
 ---
 
@@ -453,7 +659,17 @@ node {baseDir}/scripts/models.js
 - xAI API Docs: https://docs.x.ai/api
 - xAI Console (API keys): https://console.x.ai
 - API Base URL: `https://api.x.ai`
+- Management API: `https://management-api.x.ai`
 - Chat Completions: `POST /v1/chat/completions` (OpenAI-compatible)
+- Responses API: `POST /v1/responses` (recommended)
+- Image Generation: `POST /v1/images/generations`
+- Image Editing: `POST /v1/images/edits`
+- Text-to-Speech: `POST /v1/tts`
+- TTS Streaming: `WSS /v1/tts`
+- Files: `POST /v1/files`
+- Collections: `POST /collections` (management API)
+- Document Search: `POST /documents/search` (management API)
+- Deferred Completions: `GET /v1/chat/deferred-completion/{request_id}`
 - Models: `GET /v1/models`
 
 ## Environment Variables
